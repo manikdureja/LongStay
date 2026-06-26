@@ -1,0 +1,77 @@
+{
+  "name": "Booking",
+  "type": "object",
+  "properties": {
+    "property_id": {
+      "type": "string"
+    },
+    "property_title": {
+      "type": "string"
+    },
+    "property_image": {
+      "type": "string"
+    },
+    "renter_id": {
+      "type": "string"
+    },
+    "renter_name": {
+      "type": "string"
+    },
+    "renter_email": {
+      "type": "string"
+    },
+    "host_id": {
+      "type": "string"
+    },
+    "host_name": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "lease_months": {
+      "type": "number"
+    },
+    "monthly_rent": {
+      "type": "number"
+    },
+    "total_amount": {
+      "type": "number"
+    },
+    "security_deposit": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "active",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "property_id",
+    "renter_id",
+    "host_id",
+    "start_date",
+    "lease_months",
+    "monthly_rent"
+  ]
+}

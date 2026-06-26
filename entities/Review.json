@@ -1,0 +1,48 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "property_id": {
+      "type": "string"
+    },
+    "booking_id": {
+      "type": "string"
+    },
+    "reviewer_id": {
+      "type": "string"
+    },
+    "reviewer_name": {
+      "type": "string"
+    },
+    "reviewer_photo": {
+      "type": "string"
+    },
+    "host_id": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "number"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "cleanliness": {
+      "type": "number"
+    },
+    "location": {
+      "type": "number"
+    },
+    "value": {
+      "type": "number"
+    },
+    "communication": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "property_id",
+    "reviewer_id",
+    "rating",
+    "comment"
+  ]
+}

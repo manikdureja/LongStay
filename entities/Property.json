@@ -1,0 +1,147 @@
+{
+  "name": "Property",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "apartment",
+        "house",
+        "office",
+        "shop",
+        "warehouse",
+        "studio",
+        "villa",
+        "condo",
+        "loft"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "residential",
+        "commercial"
+      ],
+      "default": "residential"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "monthly_rent": {
+      "type": "number"
+    },
+    "yearly_rent": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string",
+      "default": "USD"
+    },
+    "security_deposit": {
+      "type": "number"
+    },
+    "bedrooms": {
+      "type": "number"
+    },
+    "bathrooms": {
+      "type": "number"
+    },
+    "area_sqft": {
+      "type": "number"
+    },
+    "amenities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "address": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "zip_code": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "host_id": {
+      "type": "string"
+    },
+    "host_name": {
+      "type": "string"
+    },
+    "host_photo": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "inactive",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "min_lease_months": {
+      "type": "number",
+      "default": 1
+    },
+    "max_lease_months": {
+      "type": "number",
+      "default": 24
+    },
+    "available_from": {
+      "type": "string",
+      "format": "date"
+    },
+    "is_furnished": {
+      "type": "boolean",
+      "default": false
+    },
+    "pets_allowed": {
+      "type": "boolean",
+      "default": false
+    },
+    "avg_rating": {
+      "type": "number",
+      "default": 0
+    },
+    "review_count": {
+      "type": "number",
+      "default": 0
+    },
+    "views": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "property_type",
+    "category",
+    "monthly_rent",
+    "city",
+    "country",
+    "host_id"
+  ]
+}
