@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { Building2, Mail, Lock, Star } from 'lucide-react';
 
 export default function Login() {
@@ -14,18 +14,14 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    try {
-      await base44.auth.loginViaEmailPassword(email, password);
-      navigate('/');
-    } catch (err) {
-      setError(err.message || 'Invalid email or password');
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) setError(error.message);
+    else navigate('/');
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900 flex-col justify-between p-10">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
@@ -34,27 +30,25 @@ export default function Login() {
           <span className="text-white font-semibold text-lg">LongStay</span>
         </div>
         <div>
-          <p className="text-slate-400 text-sm mb-1">Featured property</p>
-          <p className="text-white text-xl font-semibold mb-1">Sunny Downtown Loft</p>
-          <p className="text-amber-400 text-sm mb-6">$2,400 / month · San Francisco</p>
+          <p className="text-slate-400 text-sm mb-1">Trusted by renters worldwide</p>
+          <p className="text-white text-2xl font-bold mb-6">Find your perfect<br />long-term home</p>
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 text-xs font-semibold">MK</div>
+            <p className="text-slate-300 text-sm leading-relaxed italic">"Found my perfect 6-month lease in 2 days. The process was completely seamless."</p>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs font-bold">MK</div>
               <div>
                 <p className="text-white text-sm font-medium">Manik K.</p>
                 <p className="text-slate-500 text-xs">Renter · New York</p>
               </div>
-            </div>
-            <p className="text-slate-400 text-sm leading-relaxed">"Found my perfect 6-month lease in 2 days. The process was seamless."</p>
-            <div className="flex gap-1 mt-2">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
+              <div className="flex gap-0.5 ml-auto">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
+              </div>
             </div>
           </div>
         </div>
         <p className="text-slate-600 text-xs">© 2026 LongStay. Long-term rentals worldwide.</p>
       </div>
 
-      {/* Right panel */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2 mb-8">

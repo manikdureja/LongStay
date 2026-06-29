@@ -4,7 +4,7 @@ import { Building2, Menu, X, Heart, MessageSquare, User, LayoutDashboard, Search
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar({ user, profile }) {
@@ -15,7 +15,7 @@ export default function Navbar({ user, profile }) {
   const isAdmin = profile?.role === 'admin';
 
   const handleLogout = () => {
-    base44.auth.logout('/login');
+    apiClient.auth.logout('/login');
   };
 
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
