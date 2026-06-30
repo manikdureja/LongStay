@@ -7,14 +7,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { base44 } from '@/api/base44Client';
-import { CURRENCIES, COUNTRIES } from '@/lib/constants';
+import { HARYANA_CITIES } from '@/lib/haryanaCities';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Profile() {
   const { user, profile, setProfile } = useOutletContext();
   const { toast } = useToast();
   const [form, setForm] = useState({
-    full_name: '', phone: '', bio: '', photo: '', city: '', country: '', preferred_currency: 'USD', role: 'renter',
+    full_name: '', phone: '', bio: '', photo: '', city: '', country: 'India', preferred_currency: 'INR', role: 'renter',
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -64,6 +64,7 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-heading font-bold text-slate-900 mb-8">Profile Settings</h1>
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-100 shadow-sm space-y-6">
+        
         {/* Avatar */}
         <div className="flex items-center gap-5">
           <div className="relative">
@@ -80,11 +81,14 @@ export default function Profile() {
             <p className="font-medium text-slate-900">{form.full_name || 'Your name'}</p>
             <p className="text-sm text-slate-500">{user?.email}</p>
             {profile?.is_verified && (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 mt-1"><CheckCircle className="w-3 h-3" /> Verified</span>
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 mt-1">
+                <CheckCircle className="w-3 h-3" /> Verified
+              </span>
             )}
           </div>
         </div>
 
+        {/* Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
@@ -114,28 +118,25 @@ export default function Profile() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Country</label>
-            <Select value={form.country} onValueChange={(v) => update('country', v)}>
-              <SelectTrigger className="h-11"><SelectValue placeholder="Select" /></SelectTrigger>
-              <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Currency</label>
-            <Select value={form.preferred_currency} onValueChange={(v) => update('preferred_currency', v)}>
-              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-              <SelectContent>{CURRENCIES.map(c => <SelectItem key={c.code} value={c.code}>{c.symbol} {c.code}</SelectItem>)}</SelectContent>
-            </Select>
+            <Input value="India" disabled className="h-11 bg-slate-50" />
           </div>
         </div>
-
+        
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">City</label>
-          <Input value={form.city} onChange={(e) => update('city', e.target.value)} className="h-11" />
+          <Select value={form.city} onValueChange={(v) => update('city', v)}>
+            <SelectTrigger className="h-11"><SelectValue placeholder="Select city in Haryana" /></SelectTrigger>
+            <SelectContent>
+              {HARYANA_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
+        {/* Save Button */}
         <Button onClick={handleSave} disabled={saving} className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl">
           <Save className="w-4 h-4 mr-2" /> {saving ? 'Saving...' : 'Save Profile'}
         </Button>
+        
       </div>
     </div>
   );
