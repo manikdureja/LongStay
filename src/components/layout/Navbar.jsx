@@ -11,11 +11,21 @@ export default function Navbar({ user, profile }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // 1. Hook into your AuthContext to get the logout function
+  const { logout } = useAuth(); 
+
   const isHost = profile?.role === 'host' || profile?.role === 'admin';
   const isAdmin = profile?.role === 'admin';
 
-  const handleLogout = () => {
-    apiClient.auth.logout('/login');
+  // 2. Updated handleLogout to use the context function properly
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error("Failed to log out:", error);
+    }
   };
 
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
