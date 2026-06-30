@@ -27,9 +27,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'global' });
     setUser(null);
     setIsAuthenticated(false);
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = '/login';
   };
 

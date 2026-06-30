@@ -4,7 +4,7 @@ import { Building2, Menu, X, Heart, MessageSquare, User, LayoutDashboard, Search
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { apiClient } from '@/api/apiClient';
+import { useAuth } from '@/lib/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar({ user, profile }) {
@@ -18,7 +18,7 @@ export default function Navbar({ user, profile }) {
     apiClient.auth.logout('/login');
   };
 
-  const initials = user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
+  const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">

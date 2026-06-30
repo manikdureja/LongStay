@@ -11,20 +11,40 @@ export default function AppLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate('/login'); setLoaded(true); return; }
-      setUser(session.user);
-      const { data: profiles } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+    const loadProfile = async (sessionUser) => {
+      setUser(sessionUser);
+      const { data: profiles } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).single();
       if (profiles) {
         setProfile(profiles);
         if (!profiles.full_name && location.pathname !== '/onboarding') navigate('/onboarding');
       } else if (location.pathname !== '/onboarding') {
         navigate('/onboarding');
       }
+    };
+
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+        setLoaded(true);
+        return;
+      }
+      await loadProfile(session.user);
       setLoaded(true);
     };
-    load();
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setUser(null);
+        setProfile(null);
+        navigate('/login');
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        loadProfile(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (!loaded) return (

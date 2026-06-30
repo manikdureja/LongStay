@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Map, List, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import PropertyCard from '@/components/property/PropertyCard';
+import { HARYANA_CITIES } from '@/lib/haryanaCities';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -104,7 +105,7 @@ export default function SearchProperties() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex gap-3 items-center">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by city, country, or property type..." className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by city or property type in Haryana..." className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
           </div>
           <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-amber-50 border-amber-300 text-amber-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
             <SlidersHorizontal className="w-4 h-4" />

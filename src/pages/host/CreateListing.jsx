@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { base44 } from '@/api/base44Client';
-import { PROPERTY_TYPES, AMENITIES, CURRENCIES, COUNTRIES } from '@/lib/constants';
+import { PROPERTY_TYPES, AMENITIES } from '@/lib/constants';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
+import { HARYANA_CITIES } from '@/lib/haryanaCities';
 
 export default function CreateListing() {
   const { user, profile } = useOutletContext();
@@ -20,9 +21,9 @@ export default function CreateListing() {
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', property_type: 'apartment', category: 'residential',
-    images: [], monthly_rent: '', yearly_rent: '', currency: 'USD', security_deposit: '',
+    images: [], monthly_rent: '', yearly_rent: '', currency: 'INR', security_deposit: '',
     bedrooms: '', bathrooms: '', area_sqft: '', amenities: [],
-    address: '', city: '', country: '', zip_code: '',
+    address: '', city: '', country: 'India', zip_code: '',
     min_lease_months: 1, max_lease_months: 24, is_furnished: false, pets_allowed: false,
     available_from: '',
   });
@@ -149,15 +150,15 @@ export default function CreateListing() {
             <h2 className="text-lg font-semibold mb-4">Location & Details</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Country</label>
-                <Select value={form.country} onValueChange={(v) => update('country', v)}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>{COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">City</label>
+                <Select value={form.city} onValueChange={(v) => update('city', v)}>
+                  <SelectTrigger className="h-11"><SelectValue placeholder="Select city" /></SelectTrigger>
+                  <SelectContent>{HARYANA_CITIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">City</label>
-                <Input value={form.city} onChange={(e) => update('city', e.target.value)} placeholder="New York" className="h-11" />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">State</label>
+                <Input value="Haryana" disabled className="h-11 bg-slate-50" />
               </div>
             </div>
             <div>
@@ -201,15 +202,8 @@ export default function CreateListing() {
             <h2 className="text-lg font-semibold mb-4">Pricing & Availability</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Currency</label>
-                <Select value={form.currency} onValueChange={(v) => update('currency', v)}>
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>{CURRENCIES.map(c => <SelectItem key={c.code} value={c.code}>{c.symbol} {c.code}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Monthly Rent</label>
-                <Input type="number" value={form.monthly_rent} onChange={(e) => update('monthly_rent', e.target.value)} placeholder="1500" className="h-11" />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Monthly Rent (₹)</label>
+                <Input type="number" value={form.monthly_rent} onChange={(e) => update('monthly_rent', e.target.value)} placeholder="15000" className="h-11" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
