@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar({ user, profile }) {
@@ -21,10 +22,12 @@ export default function Navbar({ user, profile }) {
   // 2. Updated handleLogout to use the context function properly
   const handleLogout = async () => {
     try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error("Failed to log out:", error);
+      await supabase.auth.signOut({ scope: 'global' });
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
+    } catch (e) {
+      window.location.href = '/login';
     }
   };
 
