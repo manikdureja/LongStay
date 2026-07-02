@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Building2, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase'; // Make sure this path points to your Supabase client setup
 import { motion } from 'framer-motion';
 
 export default function Onboarding() {
@@ -16,15 +16,29 @@ export default function Onboarding() {
   const handleSubmit = async () => {
     if (!role || !name.trim()) return;
     setSaving(true);
-    const profile = await base44.entities.UserProfile.create({
-      user_id: user.id,
-      role,
-      full_name: name.trim(),
-      email: user.email,
-    });
-    setProfile(profile);
-    setSaving(false);
-    navigate('/');
+    
+    try {
+      const { data: profile, error } = await supabase
+        .from('UserProfile') // Adjust if your Supabase table is named differently (e.g., 'profiles')
+        .insert({
+          user_id: user.id,
+          role,
+          full_name: name.trim(),
+          email: user.email,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProfile(profile);
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      // Optional: Add toast notification or error state here if needed
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

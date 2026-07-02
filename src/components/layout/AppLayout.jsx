@@ -16,7 +16,11 @@ export default function AppLayout() {
       const { data: profiles } = await supabase.from('profiles').select('*').eq('id', sessionUser.id).single();
       if (profiles) {
         setProfile(profiles);
-        if (!profiles.full_name && location.pathname !== '/onboarding') navigate('/onboarding');
+        // Admins skip onboarding — they can set profile later
+        const needsOnboarding = !profiles.full_name && profiles.role !== 'admin';
+        if (needsOnboarding && location.pathname !== '/onboarding') {
+          navigate('/onboarding');
+        }
       } else if (location.pathname !== '/onboarding') {
         navigate('/onboarding');
       }
