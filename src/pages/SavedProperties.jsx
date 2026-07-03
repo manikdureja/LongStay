@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import PropertyCard from '@/components/property/PropertyCard';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 
 export default function SavedProperties() {
@@ -14,11 +14,11 @@ export default function SavedProperties() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const saved = await base44.entities.SavedProperty.filter({ user_id: user.id });
+      const { data: saved } = await supabase.from('saved_properties').select('*').eq('user_id', user.id);
       const ids = saved.map(s => s.property_id);
       setSavedIds(new Set(ids));
       if (ids.length > 0) {
-        const props = await Promise.all(ids.map(id => base44.entities.Property.get(id).catch(() => null)));
+        const { data: props } = await supabase.from('properties').select('*').in('id', ids);
         setProperties(props.filter(Boolean));
       }
       setLoading(false);
@@ -27,8 +27,8 @@ export default function SavedProperties() {
   }, [user]);
 
   const toggleSave = async (propertyId) => {
-    const saved = await base44.entities.SavedProperty.filter({ user_id: user.id, property_id: propertyId });
-    if (saved[0]) await base44.entities.SavedProperty.delete(saved[0].id);
+    const { data: saved } = await supabase.from('saved_properties').select('*').eq('user_id', user.id).eq('property_id', propertyId);
+    if (saved?.[0]) await supabase.from('saved_properties').delete().eq('id', saved[0].id);
     setSavedIds(prev => { const n = new Set(prev); n.delete(propertyId); return n; });
     setProperties(prev => prev.filter(p => p.id !== propertyId));
   };

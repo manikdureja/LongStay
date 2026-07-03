@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/constants';
 import { generateRentalAgreementPDF } from '@/lib/generateRentalAgreement';
 import { useToast } from '@/components/ui/use-toast';
@@ -31,13 +31,25 @@ export default function MyBookings() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    base44.entities.Booking.filter({ renter_id: user.id }, '-created_date').then(b => { setBookings(b); setLoading(false); });
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    supabase
+      .from('bookings')
+      .select('*')
+      .eq('renter_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) console.error('Bookings error:', error);
+        setBookings(data || []);
+        setLoading(false);
+      });
   }, [user]);
 
   const handleReview = async (booking) => {
     setSubmitting(true);
-    await base44.entities.Review.create({
+    await supabase.from('reviews').insert({
       property_id: booking.property_id,
       booking_id: booking.id,
       reviewer_id: user.id,
@@ -54,7 +66,7 @@ export default function MyBookings() {
   };
 
   const cancelBooking = async (id) => {
-    await base44.entities.Booking.update(id, { status: 'cancelled' });
+    await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id);
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
     toast({ title: 'Booking cancelled' });
   };

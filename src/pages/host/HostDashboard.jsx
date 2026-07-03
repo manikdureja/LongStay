@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/constants';
 import { generateRentalAgreementPDF } from '@/lib/generateRentalAgreement';
 import { useToast } from '@/components/ui/use-toast';
@@ -32,8 +32,8 @@ export default function HostDashboard() {
     if (!user) return;
     const load = async () => {
       const [props, books] = await Promise.all([
-        base44.entities.Property.filter({ host_id: user.id }, '-created_date'),
-        base44.entities.Booking.filter({ host_id: user.id }, '-created_date'),
+        supabase.from('properties').select('*').eq('host_id', user.id).order('created_at', { ascending: false }).then(r => r.data || []),
+        supabase.from('bookings').select('*').eq('host_id', user.id).order('created_at', { ascending: false }).then(r => r.data || []),
       ]);
       setListings(props);
       setBookings(books);
@@ -43,13 +43,13 @@ export default function HostDashboard() {
   }, [user]);
 
   const handleBookingAction = async (booking, status) => {
-    await base44.entities.Booking.update(booking.id, { status });
+    await supabase.from('bookings').update({ status }).eq('id', booking.id);
     setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status } : b));
     toast({ title: `Booking ${status}` });
   };
 
   const handleDeleteListing = async (id) => {
-    await base44.entities.Property.delete(id);
+    await supabase.from('properties').delete().eq('id', id);
     setListings(prev => prev.filter(p => p.id !== id));
     toast({ title: 'Listing deleted' });
   };

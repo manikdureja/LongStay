@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Map, List, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import PropertyCard from '@/components/property/PropertyCard';
 import { HARYANA_CITIES } from '@/lib/haryanaCities';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,8 +43,8 @@ export default function SearchProperties() {
   useEffect(() => {
     const load = async () => {
       const [props, saved] = await Promise.all([
-        base44.entities.Property.filter({ status: 'active' }),
-        base44.entities.SavedProperty.filter(),
+        supabase.from('properties').select('*').eq('status', 'active').then(r => r.data || []),
+        supabase.from('saved_properties').select('*').eq('user_id', user?.id || '').then(r => r.data || []),
       ]);
       setProperties(props);
       setSavedIds(saved.map(s => s.property_id));
@@ -82,11 +82,11 @@ export default function SearchProperties() {
 
   const toggleSave = async (propertyId) => {
     if (savedIds.includes(propertyId)) {
-      const saved = await base44.entities.SavedProperty.filter({ property_id: propertyId });
-      if (saved[0]) await base44.entities.SavedProperty.delete(saved[0].id);
+      const { data: saved } = await supabase.from('saved_properties').select('*').eq('user_id', user?.id).eq('property_id', propertyId);
+      if (saved[0]) await supabase.from('saved_properties').delete().eq('id', saved[0].id);
       setSavedIds(prev => prev.filter(id => id !== propertyId));
     } else {
-      await base44.entities.SavedProperty.create({ property_id: propertyId });
+      await supabase.from('saved_properties').insert({ user_id: user?.id, property_id: propertyId });
       setSavedIds(prev => [...prev, propertyId]);
     }
   };

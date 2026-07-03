@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
+import { uploadMultipleImages } from '@/lib/supabase';
 import { PROPERTY_TYPES, AMENITIES } from '@/lib/constants';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
@@ -32,13 +33,14 @@ export default function CreateListing() {
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
+    if (!files.length) return;
     setUploading(true);
-    const urls = [];
-    for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      urls.push(file_url);
+    try {
+      const urls = await uploadMultipleImages(files, 'properties');
+      update('images', [...form.images, ...urls]);
+    } catch(err) {
+      console.error('Upload failed:', err);
     }
-    update('images', [...form.images, ...urls]);
     setUploading(false);
   };
 
@@ -50,7 +52,7 @@ export default function CreateListing() {
 
   const handleSubmit = async () => {
     setSaving(true);
-    await base44.entities.Property.create({
+    const { error } = await supabase.from('properties').insert({
       ...form,
       monthly_rent: Number(form.monthly_rent),
       yearly_rent: form.yearly_rent ? Number(form.yearly_rent) : Number(form.monthly_rent) * 12,
@@ -61,10 +63,11 @@ export default function CreateListing() {
       min_lease_months: Number(form.min_lease_months),
       max_lease_months: Number(form.max_lease_months),
       host_id: user.id,
-      host_name: profile?.full_name || user.full_name,
+      host_name: profile?.full_name || '',
       host_photo: profile?.photo || '',
       status: 'pending',
     });
+    if (error) throw error;
     setSaving(false);
     toast({ title: 'Listing created!', description: 'Your property is pending review.' });
     navigate('/host/dashboard');

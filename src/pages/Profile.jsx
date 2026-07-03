@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
+import { uploadImage } from '@/lib/supabase';
 import { HARYANA_CITIES } from '@/lib/haryanaCities';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -16,6 +17,22 @@ export default function Profile() {
   const [form, setForm] = useState({
     full_name: '', phone: '', bio: '', photo: '', city: '', country: 'India', preferred_currency: 'INR', role: 'renter',
   });
+
+  // Load existing profile data into form
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        full_name: profile.full_name || '',
+        phone: profile.phone || '',
+        bio: profile.bio || '',
+        photo: profile.photo || '',
+        city: profile.city || '',
+        country: profile.country || 'India',
+        preferred_currency: profile.preferred_currency || 'INR',
+        role: profile.role || 'renter',
+      });
+    }
+  }, [profile]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -40,22 +57,38 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const file_url = await uploadImage(file, 'avatars');
     update('photo', file_url);
     setUploading(false);
   };
 
   const handleSave = async () => {
     setSaving(true);
-    if (profile) {
-      const updated = await base44.entities.UserProfile.update(profile.id, form);
-      setProfile(updated);
-    } else {
-      const created = await base44.entities.UserProfile.create({ ...form, user_id: user.id, email: user.email });
-      setProfile(created);
+    try {
+      if (profile) {
+        const { data: updated, error } = await supabase
+          .from('profiles')
+          .update(form)
+          .eq('id', user.id)
+          .select()
+          .single();
+        if (error) throw error;
+        if (updated) setProfile(updated);
+      } else {
+        const { data: created, error } = await supabase
+          .from('profiles')
+          .insert({ ...form, id: user.id, email: user.email })
+          .select()
+          .single();
+        if (error) throw error;
+        if (created) setProfile(created);
+      }
+      toast({ title: 'Profile saved!' });
+    } catch (err) {
+      console.error('Profile save error:', err);
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
     }
     setSaving(false);
-    toast({ title: 'Profile saved!' });
   };
 
   const initials = form.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';

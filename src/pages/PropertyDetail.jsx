@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { MapPin, Bed, Bath, Maximize2, Star, Heart, Share2, ChevronLeft, ChevronRight, X, GitCompare, Calculator, Calendar, MapPinned, Wifi, Car, Dumbbell, Waves, Wind, Coffee } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/constants';
 import { useToast } from '@/components/ui/use-toast';
 import { useCompare } from '@/context/CompareContext';
@@ -65,16 +65,21 @@ export default function PropertyDetail() {
 
   useEffect(() => {
     const load = async () => {
-      const [prop, revs, saved, bookings] = await Promise.all([
-        base44.entities.Property.get(id),
-        base44.entities.Review.filter({ property_id: id }),
-        base44.entities.SavedProperty.filter({ property_id: id }),
-        base44.entities.Booking.filter({ property_id: id }),
+      const [
+        { data: prop },
+        { data: revs },
+        { data: saved },
+        { data: bookings },
+      ] = await Promise.all([
+        supabase.from('properties').select('*').eq('id', id).single(),
+        supabase.from('reviews').select('*').eq('property_id', id),
+        supabase.from('saved_properties').select('*').eq('property_id', id).eq('user_id', user?.id || ''),
+        supabase.from('bookings').select('*').eq('property_id', id),
       ]);
       setProperty(prop);
-      setReviews(revs);
-      if (saved.length > 0) { setIsSaved(true); setSavedId(saved[0].id); }
-      setBookedRanges(bookings.filter(b => b.status === 'active' || b.status === 'approved').map(b => ({ start: new Date(b.start_date), end: new Date(b.end_date) })));
+      setReviews(revs || []);
+      if (saved?.length > 0) { setIsSaved(true); setSavedId(saved[0].id); }
+      setBookedRanges((bookings || []).filter(b => b.status === 'active' || b.status === 'approved').map(b => ({ start: new Date(b.start_date), end: new Date(b.end_date) })));
       if (prop?.min_lease_months) setLeaseMonths(prop.min_lease_months);
       setCalcMonths(prop?.min_lease_months || 3);
       setLoading(false);
@@ -84,11 +89,11 @@ export default function PropertyDetail() {
 
   const toggleSave = async () => {
     if (isSaved && savedId) {
-      await base44.entities.SavedProperty.delete(savedId);
+      await supabase.from('saved_properties').delete().eq('id', savedId);
       setIsSaved(false); setSavedId(null);
       toast({ title: 'Removed from saved' });
     } else {
-      const s = await base44.entities.SavedProperty.create({ property_id: id });
+      const { data: s } = await supabase.from('saved_properties').insert({ property_id: id, user_id: user?.id }).select().single();
       setIsSaved(true); setSavedId(s.id);
       toast({ title: 'Saved!' });
     }
@@ -102,7 +107,7 @@ export default function PropertyDetail() {
       const start = new Date(startDate);
       const end = new Date(start);
       end.setMonth(end.getMonth() + leaseMonths);
-      await base44.entities.Booking.create({
+      await supabase.from('bookings').insert({
         property_id: id,
         renter_id: user.id,
         renter_name: profile?.full_name || user.email,

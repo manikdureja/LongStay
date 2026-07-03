@@ -4,7 +4,7 @@ import { Search, Building2, Home as HomeIcon, Briefcase, MapPin, ArrowRight, Sta
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PropertyCard from '@/components/property/PropertyCard';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 
 const CATEGORIES = [
@@ -27,8 +27,8 @@ export default function Home() {
   useEffect(() => {
     const load = async () => {
       const [props, saved] = await Promise.all([
-        base44.entities.Property.filter({ status: 'active' }, '-created_date', 8),
-        user ? base44.entities.SavedProperty.filter({ user_id: user.id }) : Promise.resolve([])
+        supabase.from('properties').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(8).then(r => r.data || []),
+        user ? supabase.from('saved_properties').select('*').eq('user_id', user.id).then(r => r.data || []) : Promise.resolve([])
       ]);
       setFeatured(props);
       setSavedIds(new Set(saved.map(s => s.property_id)));
@@ -40,11 +40,11 @@ export default function Home() {
   const toggleSave = async (propertyId) => {
     if (!user) return;
     if (savedIds.has(propertyId)) {
-      const saved = await base44.entities.SavedProperty.filter({ user_id: user.id, property_id: propertyId });
-      if (saved[0]) await base44.entities.SavedProperty.delete(saved[0].id);
+      const { data: saved } = await supabase.from('saved_properties').select('*').eq('user_id', user.id).eq('property_id', propertyId);
+      if (saved?.[0]) await supabase.from('saved_properties').delete().eq('id', saved[0].id);
       setSavedIds(prev => { const n = new Set(prev); n.delete(propertyId); return n; });
     } else {
-      await base44.entities.SavedProperty.create({ user_id: user.id, property_id: propertyId });
+      await supabase.from('saved_properties').insert({ user_id: user.id, property_id: propertyId });
       setSavedIds(prev => new Set(prev).add(propertyId));
     }
   };
