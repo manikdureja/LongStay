@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Building2, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabase'; // Make sure this path points to your Supabase client setup
+import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
 
 export default function Onboarding() {
@@ -19,9 +19,9 @@ export default function Onboarding() {
     
     try {
       const { data: profile, error } = await supabase
-        .from('UserProfile') // Adjust if your Supabase table is named differently (e.g., 'profiles')
+        .from('profiles') // Changed from 'UserProfile' to 'profiles'
         .insert({
-          user_id: user.id,
+          id: user.id,    // Changed from 'user_id' to 'id'
           role,
           full_name: name.trim(),
           email: user.email,
