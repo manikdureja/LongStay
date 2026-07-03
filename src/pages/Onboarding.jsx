@@ -1,92 +1,109 @@
 import React, { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Building2, Search, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Building2, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { motion } from 'framer-motion';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Onboarding() {
-  const { user, setProfile } = useOutletContext();
+  const { user } = useOutletContext();
   const navigate = useNavigate();
-  const [role, setRole] = useState(null);
-  const [name, setName] = useState(user?.full_name || '');
+  const { toast } = useToast();
+  const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('renter');
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async () => {
-    if (!role || !name.trim()) return;
+    if (!fullName.trim()) {
+      toast({ title: 'Please enter your name', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
-    
     try {
-      const { data: profile, error } = await supabase
-        .from('profiles') // Changed from 'UserProfile' to 'profiles'
-        .insert({
-          id: user.id,    // Changed from 'user_id' to 'id'
-          role,
-          full_name: name.trim(),
-          email: user.email,
-        })
-        .select()
-        .single();
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName.trim(), role })
+        .eq('id', user.id);
 
       if (error) throw error;
 
-      setProfile(profile);
-      navigate('/');
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      // Optional: Add toast notification or error state here if needed
-    } finally {
-      setSaving(false);
+      toast({ title: 'Welcome to LongStay!' });
+
+      // Redirect based on role
+      if (role === 'host') {
+        navigate('/host/dashboard');
+      } else {
+        navigate('/');
+      }
+    } catch (e) {
+      toast({ title: 'Something went wrong', description: e.message, variant: 'destructive' });
     }
+    setSaving(false);
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <Building2 className="w-8 h-8 text-amber-400" />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 w-full max-w-md">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-4">
+            <Building2 className="w-7 h-7 text-amber-400" />
           </div>
-          <h1 className="text-2xl font-heading font-bold text-slate-900 mb-2">Welcome to LongStay</h1>
-          <p className="text-slate-500">Tell us about yourself to get started</p>
+          <h1 className="text-2xl font-bold text-slate-900">Welcome to LongStay</h1>
+          <p className="text-slate-500 text-sm mt-1">Tell us about yourself to get started</p>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Your name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className="h-12" />
-          </div>
+        {/* Name input */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Your name</label>
+          <input
+            type="text"
+            value={fullName}
+            onChange={e => setFullName(e.target.value)}
+            placeholder="Full name"
+            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            autoFocus
+          />
+        </div>
 
+        {/* Role selection */}
+        <div className="mb-8">
           <label className="block text-sm font-medium text-slate-700 mb-3">I want to...</label>
-          <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setRole('renter')}
-              className={`p-5 rounded-xl border-2 transition-all text-center ${
-                role === 'renter' ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:border-slate-300'
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                role === 'renter'
+                  ? 'border-amber-400 bg-amber-50'
+                  : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <Search className={`w-7 h-7 mx-auto mb-2 ${role === 'renter' ? 'text-amber-600' : 'text-slate-400'}`} />
+              <Search className={`w-6 h-6 ${role === 'renter' ? 'text-amber-500' : 'text-slate-400'}`} />
               <span className="font-semibold text-sm text-slate-900">Find a rental</span>
-              <p className="text-xs text-slate-500 mt-1">Browse & book properties</p>
+              <span className="text-xs text-slate-500 text-center">Browse & book properties</span>
             </button>
             <button
               onClick={() => setRole('host')}
-              className={`p-5 rounded-xl border-2 transition-all text-center ${
-                role === 'host' ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:border-slate-300'
+              className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                role === 'host'
+                  ? 'border-amber-400 bg-amber-50'
+                  : 'border-slate-200 hover:border-slate-300'
               }`}
             >
-              <Building2 className={`w-7 h-7 mx-auto mb-2 ${role === 'host' ? 'text-amber-600' : 'text-slate-400'}`} />
+              <Building2 className={`w-6 h-6 ${role === 'host' ? 'text-amber-500' : 'text-slate-400'}`} />
               <span className="font-semibold text-sm text-slate-900">List my property</span>
-              <p className="text-xs text-slate-500 mt-1">Earn from your space</p>
+              <span className="text-xs text-slate-500 text-center">Earn from your space</span>
             </button>
           </div>
-
-          <Button onClick={handleSubmit} disabled={!role || !name.trim() || saving} className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl">
-            {saving ? 'Setting up...' : 'Get Started'}
-          </Button>
         </div>
-      </motion.div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={saving || !fullName.trim()}
+          className="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors"
+        >
+          {saving ? 'Saving...' : 'Get Started'}
+        </button>
+      </div>
     </div>
   );
 }
