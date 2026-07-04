@@ -9,11 +9,11 @@ import { motion } from 'framer-motion';
 
 const CATEGORIES = [
   { icon: HomeIcon, label: 'Apartments', type: 'apartment' },
-  { icon: Building2, label: 'Houses', type: 'house' },
-  { icon: Briefcase, label: 'Offices', type: 'office' },
+  { icon: Building2, label: 'Houses / Kothi', type: 'house' },
+  { icon: Briefcase, label: 'Offices / Shops', type: 'office' },
   { icon: Building2, label: 'Villas', type: 'villa' },
-  { icon: Building2, label: 'Studios', type: 'studio' },
-  { icon: Building2, label: 'Condos', type: 'condo' },
+  { icon: HomeIcon, label: 'PG / Hostel', type: 'studio' },
+  { icon: Building2, label: 'Commercial', type: 'condo' },
 ];
 
 export default function Home() {
@@ -58,21 +58,21 @@ export default function Home() {
     <div>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="absolute inset-0 opacity-20">
-          <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&h=900&fit=crop" className="w-full h-full object-cover" alt="" />
+        <div className="absolute inset-0 opacity-35">
+          <img src="https://images.unsplash.com/photo-1582407947304-fd86f28f958f?w=1600&h=900&fit=crop" className="w-full h-full object-cover" alt="" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-2xl">
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-sm font-medium mb-6">
               <Globe className="w-4 h-4" />
-              Long-term rentals worldwide
+              🏘️ Haryana's trusted rental platform
             </span>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-heading font-bold leading-tight mb-6">
               Find your next
               <span className="text-amber-400"> long-term</span> home
             </h1>
             <p className="text-lg text-slate-300 mb-8 max-w-lg">
-              Discover apartments, houses, and commercial spaces for monthly and yearly rentals across the globe.
+              Trusted long-term rentals across Haryana — apartments, kothis, shops, PGs and more. Starting from Hansi, Hisar district.
             </p>
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -80,7 +80,7 @@ export default function Home() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by city, country, or property type..."
+                  placeholder="Search in Hansi, Hisar, Rohtak, Gurugram..."
                   className="pl-12 h-14 bg-white text-slate-900 border-0 rounded-xl text-base placeholder:text-slate-400"
                 />
               </div>
