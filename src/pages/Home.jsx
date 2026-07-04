@@ -152,9 +152,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { icon: Shield, title: 'Verified Listings', desc: 'Every property is reviewed before going live on our platform.' },
-              { icon: Clock, title: 'Flexible Leases', desc: 'Monthly to yearly leases tailored to your needs.' },
-              { icon: Star, title: 'Trusted Reviews', desc: 'Real reviews from verified tenants after their lease.' },
+              { icon: Shield, title: 'Verified Listings', desc: 'Every property in Haryana is reviewed by our team before going live.' },
+              { icon: Clock, title: 'Flexible Leases', desc: 'Monthly to yearly leases — perfect for job transfers, students and families.' },
+              { icon: Star, title: 'Local Trusted Reviews', desc: 'Real reviews from verified tenants across Hansi, Hisar and Haryana.' },
             ].map(item => (
               <div key={item.title} className="text-center">
                 <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
