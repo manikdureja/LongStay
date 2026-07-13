@@ -88,6 +88,7 @@ function App() {
             <CompareBar />
           </Router>
           <Toaster />
+          <Analytics />
         </CompareProvider>
       </QueryClientProvider>
     </AuthProvider>
