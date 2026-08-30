@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Upload, X, Plus } from 'lucide-react';
+import { ArrowLeft, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
-import { uploadMultipleImages } from '@/lib/supabase';
 import { PROPERTY_TYPES, AMENITIES } from '@/lib/constants';
+import { HARYANA_CITIES } from '@/lib/haryanaCities';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
-import { HARYANA_CITIES } from '@/lib/haryanaCities';
 
 export default function CreateListing() {
   const { user, profile } = useOutletContext();
@@ -31,15 +30,59 @@ export default function CreateListing() {
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        // Max 1200px width/height
+        const maxSize = 1200;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = (h / w) * maxSize; w = maxSize; }
+          else { w = (w / h) * maxSize; h = maxSize; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(resolve, 'image/jpeg', 0.8);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     setUploading(true);
     try {
-      const urls = await uploadMultipleImages(files, 'properties');
-      update('images', [...form.images, ...urls]);
-    } catch(err) {
-      console.error('Upload failed:', err);
+      const urls = [];
+      for (const file of files) {
+        // Compress before upload
+        const compressed = await compressImage(file);
+        const fileName = `properties/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+        const { error } = await supabase.storage
+          .from('property-images')
+          .upload(fileName, compressed, { cacheControl: '3600', upsert: false, contentType: 'image/jpeg' });
+        if (error) {
+          console.error('Upload error:', error);
+          toast({ title: `Upload failed: ${error.message}`, variant: 'destructive' });
+          continue;
+        }
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-images')
+          .getPublicUrl(fileName);
+        urls.push(publicUrl);
+      }
+      if (urls.length > 0) {
+        update('images', [...form.images, ...urls]);
+        toast({ title: `${urls.length} photo(s) uploaded successfully` });
+      }
+    } catch (err) {
+      console.error('Upload exception:', err);
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
     }
     setUploading(false);
   };
@@ -47,30 +90,59 @@ export default function CreateListing() {
   const removeImage = (idx) => update('images', form.images.filter((_, i) => i !== idx));
 
   const toggleAmenity = (amenity) => {
-    update('amenities', form.amenities.includes(amenity) ? form.amenities.filter(a => a !== amenity) : [...form.amenities, amenity]);
+    update('amenities', form.amenities.includes(amenity)
+      ? form.amenities.filter(a => a !== amenity)
+      : [...form.amenities, amenity]);
   };
 
   const handleSubmit = async () => {
     setSaving(true);
-    const { error } = await supabase.from('properties').insert({
-      ...form,
-      monthly_rent: Number(form.monthly_rent),
-      yearly_rent: form.yearly_rent ? Number(form.yearly_rent) : Number(form.monthly_rent) * 12,
-      security_deposit: Number(form.security_deposit) || 0,
-      bedrooms: Number(form.bedrooms) || 0,
-      bathrooms: Number(form.bathrooms) || 0,
-      area_sqft: Number(form.area_sqft) || 0,
-      min_lease_months: Number(form.min_lease_months),
-      max_lease_months: Number(form.max_lease_months),
-      host_id: user.id,
-      host_name: profile?.full_name || '',
-      host_photo: profile?.photo || '',
-      status: profile?.role === 'admin' ? 'active' : 'pending',
-    });
-    if (error) throw error;
+    try {
+      const propertyData = {
+        title: form.title,
+        description: form.description,
+        property_type: form.property_type,
+        category: form.category,
+        images: form.images,
+        monthly_rent: Number(form.monthly_rent),
+        yearly_rent: form.yearly_rent ? Number(form.yearly_rent) : Number(form.monthly_rent) * 12,
+        currency: 'INR',
+        security_deposit: Number(form.security_deposit) || 0,
+        bedrooms: Number(form.bedrooms) || 0,
+        bathrooms: Number(form.bathrooms) || 0,
+        area_sqft: Number(form.area_sqft) || 0,
+        amenities: form.amenities,
+        address: form.address,
+        city: form.city,
+        country: 'India',
+        zip_code: form.zip_code,
+        min_lease_months: Number(form.min_lease_months),
+        max_lease_months: Number(form.max_lease_months),
+        is_furnished: form.is_furnished,
+        pets_allowed: form.pets_allowed,
+        available_from: form.available_from || null,
+        host_id: user.id,
+        host_name: profile?.full_name || user.email,
+        host_photo: profile?.photo || '',
+        status: profile?.role === 'admin' ? 'active' : 'pending',
+        avg_rating: 0,
+        review_count: 0,
+        views: 0,
+      };
+
+      const { error } = await supabase.from('properties').insert(propertyData);
+      if (error) throw error;
+
+      toast({
+        title: profile?.role === 'admin' ? '✅ Listing published!' : '✅ Listing submitted!',
+        description: profile?.role === 'admin' ? 'Your property is now live.' : 'Pending admin approval.',
+      });
+      navigate('/host/dashboard');
+    } catch (err) {
+      console.error('Publish error:', err);
+      toast({ title: 'Failed to publish', description: err.message, variant: 'destructive' });
+    }
     setSaving(false);
-    toast({ title: 'Listing created!', description: 'Your property is pending review.' });
-    navigate('/host/dashboard');
   };
 
   return (
@@ -78,10 +150,9 @@ export default function CreateListing() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-6">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
-      <h1 className="text-2xl font-heading font-bold text-slate-900 mb-2">List Your Property</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-2">List Your Property</h1>
       <p className="text-slate-500 mb-8">Step {step} of 3</p>
 
-      {/* Progress */}
       <div className="flex gap-2 mb-8">
         {[1, 2, 3].map(s => (
           <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${s <= step ? 'bg-amber-500' : 'bg-slate-200'}`} />
@@ -94,7 +165,7 @@ export default function CreateListing() {
             <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Property Title</label>
-              <Input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="Modern 2BR apartment in downtown" className="h-11" />
+              <Input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="Modern 2BR apartment in Hansi" className="h-11" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
@@ -134,16 +205,22 @@ export default function CreateListing() {
                 ))}
                 <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-amber-400 transition-colors">
                   {uploading ? (
-                    <div className="w-6 h-6 border-2 border-slate-300 border-t-amber-500 rounded-full animate-spin" />
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-6 h-6 border-2 border-slate-300 border-t-amber-500 rounded-full animate-spin" />
+                      <span className="text-xs text-slate-400">Uploading...</span>
+                    </div>
                   ) : (
                     <>
                       <Upload className="w-6 h-6 text-slate-400 mb-1" />
                       <span className="text-xs text-slate-400">Upload</span>
                     </>
                   )}
-                  <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                  <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploading} />
                 </label>
               </div>
+              {form.images.length > 0 && (
+                <p className="text-xs text-emerald-600 mt-2">✓ {form.images.length} photo(s) uploaded</p>
+              )}
             </div>
           </div>
         )}
@@ -166,7 +243,7 @@ export default function CreateListing() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Street Address</label>
-              <Input value={form.address} onChange={(e) => update('address', e.target.value)} placeholder="123 Main St" className="h-11" />
+              <Input value={form.address} onChange={(e) => update('address', e.target.value)} placeholder="123 Main St, Near Bus Stand" className="h-11" />
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -183,8 +260,12 @@ export default function CreateListing() {
               </div>
             </div>
             <div className="flex gap-6">
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={form.is_furnished} onCheckedChange={(v) => update('is_furnished', v)} /> Furnished</label>
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox checked={form.pets_allowed} onCheckedChange={(v) => update('pets_allowed', v)} /> Pets Allowed</label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.is_furnished} onCheckedChange={(v) => update('is_furnished', v)} /> Furnished
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox checked={form.pets_allowed} onCheckedChange={(v) => update('pets_allowed', v)} /> Pets Allowed
+              </label>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Amenities</label>
@@ -203,11 +284,9 @@ export default function CreateListing() {
         {step === 3 && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold mb-4">Pricing & Availability</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Monthly Rent (₹)</label>
-                <Input type="number" value={form.monthly_rent} onChange={(e) => update('monthly_rent', e.target.value)} placeholder="15000" className="h-11" />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Monthly Rent (₹)</label>
+              <Input type="number" value={form.monthly_rent} onChange={(e) => update('monthly_rent', e.target.value)} placeholder="15000" className="h-11" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -215,7 +294,7 @@ export default function CreateListing() {
                 <Input type="number" value={form.yearly_rent} onChange={(e) => update('yearly_rent', e.target.value)} placeholder="Auto-calculated if blank" className="h-11" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Security Deposit</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Security Deposit (₹)</label>
                 <Input type="number" value={form.security_deposit} onChange={(e) => update('security_deposit', e.target.value)} className="h-11" />
               </div>
             </div>
@@ -237,12 +316,24 @@ export default function CreateListing() {
         )}
 
         <div className="flex justify-between mt-8">
-          {step > 1 && <Button variant="outline" onClick={() => setStep(step - 1)} className="rounded-xl">Previous</Button>}
+          {step > 1 && (
+            <Button variant="outline" onClick={() => setStep(step - 1)} className="rounded-xl">Previous</Button>
+          )}
           <div className="ml-auto">
             {step < 3 ? (
-              <Button onClick={() => setStep(step + 1)} className="bg-slate-900 hover:bg-slate-800 rounded-xl px-8">Next</Button>
+              <Button
+                onClick={() => setStep(step + 1)}
+                disabled={step === 1 && !form.title}
+                className="bg-slate-900 hover:bg-slate-800 rounded-xl px-8"
+              >
+                Next
+              </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={saving || !form.title || !form.monthly_rent || !form.city || !form.country} className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold rounded-xl px-8">
+              <Button
+                onClick={handleSubmit}
+                disabled={saving || !form.title || !form.monthly_rent || !form.city}
+                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl px-8"
+              >
                 {saving ? 'Publishing...' : 'Publish Listing'}
               </Button>
             )}
