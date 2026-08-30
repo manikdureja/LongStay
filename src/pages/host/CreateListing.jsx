@@ -65,7 +65,7 @@ export default function CreateListing() {
       host_id: user.id,
       host_name: profile?.full_name || '',
       host_photo: profile?.photo || '',
-      status: 'pending',
+      status: profile?.role === 'admin' ? 'active' : 'pending',
     });
     if (error) throw error;
     setSaving(false);

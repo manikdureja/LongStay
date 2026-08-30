@@ -56,7 +56,11 @@ export default function AdminPanel() {
 
   // Property actions
   const updatePropertyStatus = async (id, status) => {
-    await supabase.from('properties').update({ status }).eq('id', id);
+    const { error } = await supabase.from('properties').update({ status }).eq('id', id);
+    if (error) {
+      toast({ title: 'Failed to update', description: error.message, variant: 'destructive' });
+      return;
+    }
     setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
     toast({ title: `Property ${status}` });
   };
