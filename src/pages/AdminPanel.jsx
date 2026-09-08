@@ -61,8 +61,14 @@ export default function AdminPanel() {
       toast({ title: 'Failed to update', description: error.message, variant: 'destructive' });
       return;
     }
+    // Immediately update local state
     setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
-    toast({ title: `Property ${status}` });
+    toast({ title: status === 'active' ? '✅ Property approved and live!' : `Property ${status}` });
+    // Re-fetch from DB after 1s to ensure sync
+    setTimeout(async () => {
+      const { data } = await supabase.from('properties').select('*').order('created_at', { ascending: false });
+      if (data) setProperties(data);
+    }, 1000);
   };
 
   const deleteProperty = async (id) => {

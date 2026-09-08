@@ -43,7 +43,7 @@ export default function SearchProperties() {
   useEffect(() => {
     const load = async () => {
       const [props, saved] = await Promise.all([
-        supabase.from('properties').select('*').eq('status', 'active').then(r => r.data || []),
+        supabase.from('properties').select('*').eq('status', 'active').order('created_at', { ascending: false }).then(r => r.data || []),
         supabase.from('saved_properties').select('*').eq('user_id', user?.id || '').then(r => r.data || []),
       ]);
       setProperties(props);

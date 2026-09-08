@@ -43,9 +43,18 @@ export default function HostDashboard() {
   }, [user]);
 
   const handleBookingAction = async (booking, status) => {
-    await supabase.from('bookings').update({ status }).eq('id', booking.id);
+    const { error } = await supabase.from('bookings').update({ status }).eq('id', booking.id);
+    if (error) {
+      toast({ title: 'Failed', description: error.message, variant: 'destructive' });
+      return;
+    }
     setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, status } : b));
-    toast({ title: `Booking ${status}` });
+    toast({ title: status === 'approved' ? '✅ Booking approved!' : `Booking ${status}` });
+    // Re-fetch to ensure sync
+    setTimeout(async () => {
+      const { data } = await supabase.from('bookings').select('*').eq('host_id', user.id).order('created_at', { ascending: false });
+      if (data) setBookings(data);
+    }, 1000);
   };
 
   const handleDeleteListing = async (id) => {

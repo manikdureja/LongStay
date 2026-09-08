@@ -18,6 +18,7 @@ export default function CreateListing() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const submittingRef = React.useRef(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     title: '', description: '', property_type: 'apartment', category: 'residential',
@@ -96,6 +97,8 @@ export default function CreateListing() {
   };
 
   const handleSubmit = async () => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSaving(true);
     try {
       const propertyData = {
@@ -143,6 +146,7 @@ export default function CreateListing() {
       toast({ title: 'Failed to publish', description: err.message, variant: 'destructive' });
     }
     setSaving(false);
+    submittingRef.current = false;
   };
 
   return (
