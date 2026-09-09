@@ -56,19 +56,16 @@ export default function AdminPanel() {
 
   // Property actions
   const updatePropertyStatus = async (id, status) => {
+    // Immediately remove from UI to prevent double clicks
+    setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
     const { error } = await supabase.from('properties').update({ status }).eq('id', id);
     if (error) {
+      // Revert on error
+      setProperties(prev => prev.map(p => p.id === id ? { ...p, status: 'pending' } : p));
       toast({ title: 'Failed to update', description: error.message, variant: 'destructive' });
       return;
     }
-    // Immediately update local state
-    setProperties(prev => prev.map(p => p.id === id ? { ...p, status } : p));
-    toast({ title: status === 'active' ? '✅ Property approved and live!' : `Property ${status}` });
-    // Re-fetch from DB after 1s to ensure sync
-    setTimeout(async () => {
-      const { data } = await supabase.from('properties').select('*').order('created_at', { ascending: false });
-      if (data) setProperties(data);
-    }, 1000);
+    toast({ title: status === 'active' ? '✅ Property approved!' : `Property ${status}` });
   };
 
   const deleteProperty = async (id) => {
@@ -79,9 +76,13 @@ export default function AdminPanel() {
 
   // Booking actions
   const updateBookingStatus = async (id, status) => {
-    await supabase.from('bookings').update({ status }).eq('id', id);
     setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
-    toast({ title: `Booking ${status}` });
+    const { error } = await supabase.from('bookings').update({ status }).eq('id', id);
+    if (error) {
+      toast({ title: 'Failed', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: status === 'approved' ? '✅ Booking approved!' : `Booking ${status}` });
   };
 
   const deleteBooking = async (id) => {
