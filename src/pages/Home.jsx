@@ -28,7 +28,7 @@ export default function Home() {
     const load = async () => {
       const [props, saved] = await Promise.all([
         supabase.from('properties').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(8).then(r => r.data || []),
-        user ? supabase.from('saved_properties').select('*').eq('user_id', user.id).then(r => r.data || []) : Promise.resolve([])
+        user?.id ? supabase.from('saved_properties').select('*').eq('user_id', user.id).then(r => r.data || []) : Promise.resolve([])
       ]);
       setFeatured(props);
       setSavedIds(new Set(saved.map(s => s.property_id)));
